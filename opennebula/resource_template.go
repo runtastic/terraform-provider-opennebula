@@ -1,13 +1,12 @@
 package opennebula
 
 import (
-	"log"
-
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/megamsys/opennebula-go/api"
 	"github.com/megamsys/opennebula-go/template"
 	"errors"
 	"strconv"
+	"log"
 )
 
 func resourceTemplate() *schema.Resource {
@@ -251,7 +250,7 @@ func resourceTemplate() *schema.Resource {
 				Optional: true,
 			},
 			"nic": {
-				Type: schema.TypeList,
+				Type: schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -300,28 +299,12 @@ func getNestedSet(d *schema.ResourceData, k string) map[string]interface{} {
 }
 
 func resourceTemplateCreate(d *schema.ResourceData, meta interface{}) error {
-	permissions := getNestedSet(d, "permissions")
-	context := getNestedSet(d, "context")
-	graphics := getNestedSet(d, "graphics")
-	disk := getNestedSet(d, "disk")
-	os := getNestedSet(d, "os")
-
-	nic := d.Get("nic").([]interface{})
-	nics := make([]*template.NIC, len(nic))
-	for i, n := range nic {
-		mapN := n.(*schema.Set).List()[0].(map[string]interface{})
-		nics[i] = &template.NIC{
-			Network: mapN["network"].(string),
-			Network_uname: mapN["network_uname"].(string),
-		}
-	}
+	log.Println("jason says: creating...")
 
 	userTemplate := &template.UserTemplate{
 		T: meta.(*api.Rpc),
 		Template: &template.Template{
 			Name: d.Get("name").(string),
-
-			/*
 			Cpu: d.Get("cpu").(string),
 			Cpu_cost: d.Get("cpu_cost").(string),
 			Description: d.Get("description").(string),
@@ -336,11 +319,11 @@ func resourceTemplateCreate(d *schema.ResourceData, meta interface{}) error {
 			From_app_name: d.Get("from_app_name").(string),
 			Sched_requirments: d.Get("sched_requirements").(string),
 			Sched_ds_requirments: d.Get("sched_ds_requirements").(string),
-			Nic: nics,
-			*/
 		},
 	}
 
+	// TODO: Clean up a bit
+	permissions := getNestedSet(d, "permissions")
 	if permissions != nil {
 		userTemplate.Permissions = &template.Permissions{
 			Owner_U: permissions["owner_u"].(int),
@@ -355,23 +338,23 @@ func resourceTemplateCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	context := getNestedSet(d, "context")
 	if context != nil {
 		userTemplate.Template.Context = &template.Context{
 			Network: context["network"].(string),
 			SSH_Public_key: context["ssh_public_key"].(string),
-			/*
 			Files: context["files"].(string),
 			Set_Hostname: context["set_hostname"].(string),
 			Node_Name: context["node_name"].(string),
 			Accounts_id: context["accounts_id"].(string),
 			Platform_id: context["platform_id"].(string),
 			Assembly_id: context["assembly_id"].(string),
-			Assemblies_id: context["assembles_id"].(string),
+			Assemblies_id: context["assemblies_id"].(string),
 			Org_id: context["org_id"].(string),
-			*/
 		}
 	}
 
+	graphics := getNestedSet(d, "graphics")
 	if graphics != nil {
 		userTemplate.Template.Graphics = &template.Graphics{
 			Listen: graphics["listen"].(string),
@@ -381,6 +364,8 @@ func resourceTemplateCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+
+	disk := getNestedSet(d, "disk")
 	if disk != nil {
 		userTemplate.Template.Disk = &template.Disk{
 			Driver: disk["driver"].(string),
@@ -390,21 +375,33 @@ func resourceTemplateCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+
+	os := getNestedSet(d, "os")
 	if os != nil {
 		userTemplate.Template.Os = &template.OS{
 			Arch: os["arch"].(string),
 		}
 	}
 
+	nicList := d.Get("nic").(*schema.Set).List()
+	nics := make([]*template.NIC, len(nicList))
+	for i, nic := range nicList {
+		mapN := nic.(map[string]interface{})
+		nics[i] = &template.NIC{
+			Network: mapN["network"].(string),
+			Network_uname: mapN["network_uname"].(string),
+		}
+	}
+	userTemplate.Template.Nic = nics
 
-	xml, err := userTemplate.AllocateTemplate()
+	xmlRpc, err := userTemplate.AllocateTemplate()
 	if err != nil {
 		log.Println("[FATAL] Could not allocate template", err)
 		return err
 	}
 
-	log.Println("[INFO] Creating a template returned response", xml)
-	d.SetId(xml.(string))
+	log.Println("[INFO] Creating a template returned response", xmlRpc)
+	d.SetId(xmlRpc.(string))
 
 	return resourceTemplateRead(d, meta)
 }
@@ -428,6 +425,7 @@ func resourceTemplateRead(d *schema.ResourceData, meta interface{}) error {
 		return errors.New("No template with such name")
 	}
 
+	// TODO: PK (user_id, name)
 	if len(userTemplates) != 1 {
 		log.Printf("[WARN] Reading template %s returned %d different templates\n", name, len(userTemplates))
 	}
@@ -442,31 +440,6 @@ func resourceTemplateRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("reg_time", t.RegTime)
 	d.Set("name", t.Name)
 
-	/*
-	d.Set("permissions", map[string]interface{}{
-		"owner_u": t.Permissions.Owner_U,
-		"owner_m": t.Permissions.Owner_M,
-		"owner_a": t.Permissions.Owner_A,
-		"group_u": t.Permissions.Group_U,
-		"group_m": t.Permissions.Group_M,
-		"group_a": t.Permissions.Group_A,
-		"other_u": t.Permissions.Other_U,
-		"other_m": t.Permissions.Other_M,
-		"other_a": t.Permissions.Other_A,
-	})
-
-	d.Set("context", map[string]interface{}{
-		"network": t.Template.Context.Network,
-		"files": t.Template.Context.Files,
-		"ssh_public_key": t.Template.Context.SSH_Public_key,
-		"set_hostname": t.Template.Context.Set_Hostname,
-		"node_name": t.Template.Context.Node_Name,
-		"accounts_id": t.Template.Context.Accounts_id,
-		"platform_id": t.Template.Context.Platform_id,
-		"assembly_id": t.Template.Context.Assembly_id,
-		"assemblies_id": t.Template.Context.Assemblies_id,
-		"org_id": t.Template.Context.Org_id,
-	})
 	d.Set("cpu", t.Template.Cpu)
 	d.Set("cpu_cost", t.Template.Cpu_cost)
 	d.Set("description", t.Template.Description)
@@ -477,21 +450,67 @@ func resourceTemplateRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("sunstone_capacity_select", t.Template.Sunstone_capacity_select)
 	d.Set("sunstone_network_select", t.Template.Sunstone_Network_select)
 	d.Set("vcpu", t.Template.VCpu)
-	d.Set("graphics", map[string]interface{}{
-		"listen": t.Template.Graphics.Listen,
-		"port": t.Template.Graphics.Port,
-		"type": t.Template.Graphics.Type,
-		"random_passwd": t.Template.Graphics.RandomPassWD,
-	})
-	d.Set("disk", map[string]interface{}{
-		"driver": t.Template.Disk.Driver,
-		"image": t.Template.Disk.Image,
-		"image_uname": t.Template.Disk.Image_Uname,
-		"size": t.Template.Disk.Size,
-	})
+	d.Set("sched_requirements", t.Template.Sched_requirments)
+	d.Set("sched_ds_requirements", t.Template.Sched_ds_requirments)
 	d.Set("disk_cost", t.Template.Disk_cost)
 	d.Set("from_app", t.Template.From_app)
 	d.Set("from_app_name", t.Template.From_app_name)
+
+	if t.Permissions != nil {
+		d.Set("permissions", []map[string]interface{}{
+			{
+				"owner_u": t.Permissions.Owner_U,
+				"owner_m": t.Permissions.Owner_M,
+				"owner_a": t.Permissions.Owner_A,
+				"group_u": t.Permissions.Group_U,
+				"group_m": t.Permissions.Group_M,
+				"group_a": t.Permissions.Group_A,
+				"other_u": t.Permissions.Other_U,
+				"other_m": t.Permissions.Other_M,
+				"other_a": t.Permissions.Other_A,
+			},
+		})
+	}
+
+	if t.Template.Context != nil {
+		d.Set("context", []map[string]interface{}{
+			{
+				"network": t.Template.Context.Network,
+				"files": t.Template.Context.Files,
+				"ssh_public_key": t.Template.Context.SSH_Public_key,
+				"set_hostname": t.Template.Context.Set_Hostname,
+				"node_name": t.Template.Context.Node_Name,
+				"accounts_id": t.Template.Context.Accounts_id,
+				"platform_id": t.Template.Context.Platform_id,
+				"assembly_id": t.Template.Context.Assembly_id,
+				"assemblies_id": t.Template.Context.Assemblies_id,
+				"org_id": t.Template.Context.Org_id,
+			},
+		})
+	}
+
+
+	if t.Template.Graphics != nil {
+		d.Set("graphics", []map[string]interface{}{
+			{
+				"listen": t.Template.Graphics.Listen,
+				"port": t.Template.Graphics.Port,
+				"type": t.Template.Graphics.Type,
+				"random_passwd": t.Template.Graphics.RandomPassWD,
+			},
+		})
+	}
+
+	if t.Template.Disk != nil {
+		d.Set("disk", []map[string]interface{}{
+			{
+				"driver": t.Template.Disk.Driver,
+				"image": t.Template.Disk.Image,
+				"image_uname": t.Template.Disk.Image_Uname,
+				"size": t.Template.Disk.Size,
+			},
+		})
+	}
 
 	nics := make([]map[string]interface{}, len(t.Template.Nic))
 	for i, n := range t.Template.Nic {
@@ -500,15 +519,15 @@ func resourceTemplateRead(d *schema.ResourceData, meta interface{}) error {
 			"network_uname": n.Network_uname,
 		}
 	}
-	d.Set("nic", []interface{}{
+	d.Set("nic", nics)
 
-	})
-	d.Set("os", map[string]interface{}{
-		"arch": t.Template.Os.Arch,
-	})
-	d.Set("sched_requirements", t.Template.Sched_requirments)
-	d.Set("sched_ds_requirements", t.Template.Sched_ds_requirments)
-	*/
+	if t.Template.Os != nil {
+		d.Set("os", []map[string]interface{}{
+			{
+				"arch": t.Template.Os.Arch,
+			},
+		})
+	}
 
 	return nil
 }
@@ -521,7 +540,7 @@ func resourceTemplateDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*api.Rpc)
 	err := resourceTemplateRead(d, meta)
 	if err != nil {
-		return err
+		return nil
 	}
 
 	intId, err := strconv.Atoi(d.Id())
