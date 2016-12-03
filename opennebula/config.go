@@ -7,7 +7,7 @@ import (
 
 type Config struct {
 	Endpoint string
-	User string
+	User     string
 	Password string
 }
 

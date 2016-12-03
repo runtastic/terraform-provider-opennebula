@@ -12,16 +12,19 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "The URL to your public or private OpenNebula",
+				DefaultFunc: schema.EnvDefaultFunc("OPENNEBULA_ENDPOINT", nil),
 			},
-			"user": {
+			"username": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "The ID of the user to identify as",
+				DefaultFunc: schema.EnvDefaultFunc("OPENNEBULA_USERNAME", nil),
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "The password for the user",
+				DefaultFunc: schema.EnvDefaultFunc("OPENNEBULA_PASSWORD", nil),
 			},
 		},
 
@@ -34,10 +37,9 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	config := Config{
-		Endpoint: d.Get("endpoint").(string),
-		User: d.Get("user").(string),
-		Password: d.Get("password").(string),
-	}
-	return config.Client()
+	return NewClient(
+		d.Get("endpoint").(string),
+		d.Get("username").(string),
+		d.Get("password").(string),
+	)
 }
