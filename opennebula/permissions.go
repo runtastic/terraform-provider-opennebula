@@ -42,3 +42,21 @@ func permission(p string) *Permissions {
 		Other_A: other & 1,
 	}
 }
+
+func changePermissions(id int, p *Permissions, client *Client, call string) (string, error) {
+  return client.Call(
+    call,
+    id,
+    p.Owner_U,
+    p.Owner_M,
+    p.Owner_A,
+    p.Group_U,
+    p.Group_M,
+    p.Group_A,
+    p.Other_U,
+    p.Other_M,
+    p.Other_A,
+    false, // recursive (do not change the associated images' permissions)
+  )
+}
+

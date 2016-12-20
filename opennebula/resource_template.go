@@ -113,7 +113,7 @@ func resourceTemplateCreate(d *schema.ResourceData, meta interface{}) error {
 
 	d.SetId(resp)
 
-	if _, err = changePermissions(intId(d.Id()), permission(d.Get("permissions").(string)), client); err != nil {
+	if _, err = changePermissions(intId(d.Id()), permission(d.Get("permissions").(string)), client, "one.template.chmod"); err != nil {
 		return err
 	}
 
@@ -203,7 +203,7 @@ func resourceTemplateUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if d.HasChange("permissions") {
-		resp, err := changePermissions(intId(d.Id()), permission(d.Get("permissions").(string)), client)
+		resp, err := changePermissions(intId(d.Id()), permission(d.Get("permissions").(string)), client, "one.template.chmod")
 		if err != nil {
 			return err
 		}
@@ -229,19 +229,3 @@ func resourceTemplateDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func changePermissions(id int, p *Permissions, client *Client) (string, error) {
-	return client.Call(
-		"one.template.chmod",
-		id,
-		p.Owner_U,
-		p.Owner_M,
-		p.Owner_A,
-		p.Group_U,
-		p.Group_M,
-		p.Group_A,
-		p.Other_U,
-		p.Other_M,
-		p.Other_A,
-		false, // recursive (do not change the associated images' permissions)
-	)
-}
