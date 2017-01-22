@@ -22,23 +22,6 @@ type UserVnet struct {
 	Gname       string       `xml:"GNAME"`
 	Permissions *Permissions `xml:"PERMISSIONS"`
 	Bridge      string       `xml:"BRIDGE"`
-	//Ar                      []*AddressRange  `xml:"AR_POOL"`
-}
-
-type AddressRanges struct {
-	UserVnet []*AddressRange `xml:"AR_POOL"`
-}
-
-type AddressRange struct {
-	Id       int    `xml:"AR_ID"`
-	Ip_start string `xml:"IP"`
-	Ip_size  int    `xml:"SIZE"`
-}
-
-type AddressReservation struct {
-	Id                int
-	Reservation_start string
-	Reservation_size  int
 }
 
 func resourceVnet() *schema.Resource {
@@ -137,7 +120,7 @@ func resourceVnetCreate(d *schema.ResourceData, meta interface{}) error {
 	// Create base object
 	resp, err := client.Call(
 		"one.vn.allocate",
-		fmt.Sprintf("NAME = \"%s\"\n", d.Get("name").(string))+d.Get("description").(string),
+		fmt.Sprintf("NAME = \"%s\"\n", d.Get("name").(string))+d.Get("description").(string)+"\nBRIDGE="+d.Get("bridge").(string),
 		-1,
 	)
 	if err != nil {
@@ -190,7 +173,7 @@ func resourceVnetRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Client)
 	found := false
 
-	// Try to find the template by ID, if specified
+	// Try to find the vnet by ID, if specified
 	if d.Id() != "" {
 		resp, err := client.Call("one.vn.info", intId(d.Id()), false)
 		if err == nil {
@@ -203,7 +186,7 @@ func resourceVnetRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	// Otherwise, try to find the template by (user, name) as the de facto compound primary key
+	// Otherwise, try to find the vnet by (user, name) as the de facto compound primary key
 	if d.Id() == "" || !found {
 		resp, err := client.Call("one.vnpool.info", -3, -1, -1)
 		if err != nil {
@@ -224,7 +207,7 @@ func resourceVnetRead(d *schema.ResourceData, meta interface{}) error {
 
 		if !found || vn == nil {
 			d.SetId("")
-			log.Printf("Could not find template with name %s for user %s", d.Get("name").(string), client.Username)
+			log.Printf("Could not find vnet with name %s for user %s", d.Get("name").(string), client.Username)
 			return nil
 		}
 	}
@@ -246,7 +229,7 @@ func resourceVnetRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVnetExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	err := resourceTemplateRead(d, meta)
+	err := resourceVnetRead(d, meta)
 	if err != nil || d.Id() == "" {
 		return false, err
 	}
@@ -262,7 +245,7 @@ func resourceVnetUpdate(d *schema.ResourceData, meta interface{}) error {
 			"one.vn.update",
 			intId(d.Id()),
 			d.Get("description").(string),
-			0, // replace the whole template instead of merging it with the existing one
+			0, // replace the whole vnet instead of merging it with the existing one
 		)
 		if err != nil {
 			return err
@@ -281,7 +264,7 @@ func resourceVnetUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVnetDelete(d *schema.ResourceData, meta interface{}) error {
-	err := resourceTemplateRead(d, meta)
+	err := resourceVnetRead(d, meta)
 	if err != nil || d.Id() == "" {
 		return err
 	}
