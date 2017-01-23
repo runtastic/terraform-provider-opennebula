@@ -26,3 +26,4 @@ _testmain.go
 tmp/
 .env
 test.go
+*.swp

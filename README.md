@@ -74,7 +74,7 @@ The following list represent's all of OpenNebula's resources reachable through t
 * [ ] [onecluster](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onecluster)
 * [ ] [onegroup](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onegroup)
 * [ ] [onevdc](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onevdc)
-* [ ] [onevnet](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onevnet)
+* [x] [onevnet](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onevnet)
 * [ ] [oneuser](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#oneuser)
 * [ ] [onedatastore](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onedatastore)
 * [ ] [oneimage](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#oneimage)
