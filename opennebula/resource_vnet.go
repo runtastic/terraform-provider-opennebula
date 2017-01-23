@@ -219,10 +219,6 @@ func resourceVnetRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("uname", vn.Uname)
 	d.Set("gname", vn.Gname)
 	d.Set("bridge", vn.Bridge)
-	//d.Set("ar", vn.Ar)
-	//d.Set("ip_start", vn.Ip_start)
-	//d.Set("ip_size", vn.Ip_size)
-	//d.Set("reservation-size", vn.Reservation_size)
 	d.Set("permissions", permissionString(vn.Permissions))
 
 	return nil
