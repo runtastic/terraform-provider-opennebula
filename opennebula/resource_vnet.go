@@ -150,11 +150,12 @@ func resourceVnetCreate(d *schema.ResourceData, meta interface{}) error {
 	if d.Get("reservation_size").(int) > 0 {
 		// add address range and reservations
 		var address_reservation_string = `SIZE = %d
-    NAME = ASDF`
+    NAME = %s`
 		_, r_err := client.Call(
 			"one.vn.reserve",
 			intId(d.Id()),
 			fmt.Sprintf(address_reservation_string, d.Get("reservation_size").(int)),
+      d.Get("name").(string)+"-reserved",
 		)
 
 		if r_err != nil {
