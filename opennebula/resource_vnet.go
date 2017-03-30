@@ -7,6 +7,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+  "net"
 )
 
 type UserVnets struct {
@@ -149,17 +150,22 @@ func resourceVnetCreate(d *schema.ResourceData, meta interface{}) error {
 
 	if d.Get("reservation_size").(int) > 0 {
 		// add address range and reservations
-		var address_reservation_string = `SIZE = %d
-    NAME = %s`
-		_, r_err := client.Call(
-			"one.vn.reserve",
-			intId(d.Id()),
-			fmt.Sprintf(address_reservation_string, d.Get("reservation_size").(int)),
-      d.Get("name").(string)+"-reserved",
-		)
+		ip := net.ParseIP(d.Get("ip_start").(string))
+		ip = ip.To4()
 
-		if r_err != nil {
-			return r_err
+		for i := 0; i < d.Get("reservation_size").(int); i++ {
+			ip[3]++
+
+			var address_reservation_string = `LEASES=[IP=%s]`
+			_, r_err := client.Call(
+				"one.vn.hold",
+				intId(d.Id()),
+				fmt.Sprintf(address_reservation_string, ip),
+			)
+
+			if r_err != nil {
+				return r_err
+			}
 		}
 
 	}
