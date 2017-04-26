@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
+	"net"
 	"strconv"
 	"strings"
-  "net"
 )
 
 type UserVnets struct {
@@ -154,8 +154,6 @@ func resourceVnetCreate(d *schema.ResourceData, meta interface{}) error {
 		ip = ip.To4()
 
 		for i := 0; i < d.Get("reservation_size").(int); i++ {
-			ip[3]++
-
 			var address_reservation_string = `LEASES=[IP=%s]`
 			_, r_err := client.Call(
 				"one.vn.hold",
@@ -166,6 +164,8 @@ func resourceVnetCreate(d *schema.ResourceData, meta interface{}) error {
 			if r_err != nil {
 				return r_err
 			}
+
+			ip[3]++
 		}
 
 	}
