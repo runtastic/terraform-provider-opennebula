@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/akurz/terraform-provider-opennebula/opennebula"
 	"github.com/hashicorp/terraform/plugin"
-	"github.com/larribas/terraform-provider-opennebula/opennebula"
 )
 
 func main() {
