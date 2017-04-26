@@ -256,7 +256,7 @@ func resourceVnetUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if d.HasChange("name") {
-		_, err := client.Call(
+		resp, err := client.Call(
 			"one.vn.rename",
 			intId(d.Id()),
 			d.Get("name").(string),
@@ -264,6 +264,29 @@ func resourceVnetUpdate(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			return err
 		}
+		log.Printf("[INFO] Successfully updated name for Vnet %s\n", resp)
+	}
+
+	if d.HasChange("ip_size") {
+		var address_range_string = `AR = [
+		AR_ID = 0,
+		TYPE = IP4,
+		IP = %s,
+		SIZE = %d ]`
+		resp, a_err := client.Call(
+			"one.vn.update_ar",
+			intId(d.Id()),
+			fmt.Sprintf(address_range_string, d.Get("ip_start").(string), d.Get("ip_size").(int)),
+		)
+
+		if a_err != nil {
+			return a_err
+		}
+		log.Printf("[INFO] Successfully updated size of address range for Vnet %s\n", resp)
+	}
+
+	if d.HasChange("ip_start") {
+		log.Printf("[WARNING] Changing the IP address of the Vnet address range is currently not supported")
 	}
 
 	if d.HasChange("permissions") {
