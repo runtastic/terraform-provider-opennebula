@@ -190,6 +190,18 @@ func resourceTemplateExists(d *schema.ResourceData, meta interface{}) (bool, err
 func resourceTemplateUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Client)
 
+	if d.HasChange("name") {
+		resp, err := client.Call(
+			"one.template.rename",
+			intId(d.Id()),
+			d.Get("name").(string),
+		)
+		if err != nil {
+			return err
+		}
+		log.Printf("[INFO] Successfully updated template name to %s\n", resp)
+	}
+
 	if d.HasChange("description") {
 		_, err := client.Call(
 			"one.template.update",
@@ -228,4 +240,3 @@ func resourceTemplateDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Successfully deleted template %s\n", resp)
 	return nil
 }
-
