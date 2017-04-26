@@ -255,6 +255,17 @@ func resourceVnetUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	if d.HasChange("name") {
+		_, err := client.Call(
+			"one.vn.rename",
+			intId(d.Id()),
+			d.Get("name").(string),
+		)
+		if err != nil {
+			return err
+		}
+	}
+
 	if d.HasChange("permissions") {
 		resp, err := changePermissions(intId(d.Id()), permission(d.Get("permissions").(string)), client, "one.vn.chmod")
 		if err != nil {
