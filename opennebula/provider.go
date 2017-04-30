@@ -31,6 +31,7 @@ func Provider() terraform.ResourceProvider {
 		ResourcesMap: map[string]*schema.Resource{
 			"opennebula_template": resourceTemplate(),
 			"opennebula_vnet":     resourceVnet(),
+			"opennebula_vm":       resourceVm(),
 		},
 
 		ConfigureFunc: providerConfigure,
