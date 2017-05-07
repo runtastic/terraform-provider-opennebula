@@ -307,6 +307,28 @@ func resourceVnetDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	client := meta.(*Client)
+	if d.Get("reservation_size").(int) > 0 {
+		// add address range and reservations
+		ip := net.ParseIP(d.Get("ip_start").(string))
+		ip = ip.To4()
+
+		for i := 0; i < d.Get("reservation_size").(int); i++ {
+			var address_reservation_string = `LEASES=[IP=%s]`
+			_, r_err := client.Call(
+				"one.vn.release",
+				intId(d.Id()),
+				fmt.Sprintf(address_reservation_string, ip),
+			)
+
+			if r_err != nil {
+				return r_err
+			}
+
+			ip[3]++
+		}
+		log.Printf("[INFO] Successfully released reservered IP addresses.")
+	}
+
 	resp, err := client.Call("one.vn.delete", intId(d.Id()), false)
 	if err != nil {
 		return err
