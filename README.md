@@ -87,6 +87,19 @@ The following list represent's all of OpenNebula's resources reachable through t
 * [ ] [oneacct](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#oneacct)
 
 
-# CONTRIBUTIONS
+# Collaborators
 
-Contributions are of course open and welcome.
+- [Lorenzo Arribas](https://github.com/larribas)
+- [Jason Tevnan](https://github.com/tnosaj)
+
+## Contributing
+Bug reports and pull requests are welcome on GitHub at
+https://github.com/runtastic/terraform-provider-opennebula. This project is
+intended to be a safe, welcoming space for collaboration, and contributors are
+expected to adhere to the
+[Contributor Covenant](http://contributor-covenant.org) code of conduct.
+
+## License
+
+The gem is available as open source under the terms of
+the [MIT License](http://opensource.org/licenses/MIT).
