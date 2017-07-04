@@ -5,14 +5,9 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
-	"net"
 	"strconv"
 	"strings"
 )
-
-type UserImages struct {
-	UserImage []*UserImages `xml:"IMAGE"`
-}
 
 type UserImage struct {
 	Name        string       `xml:"NAME"`
@@ -22,8 +17,20 @@ type UserImage struct {
 	Uname       string       `xml:"UNAME"`
 	Gname       string       `xml:"GNAME"`
 	Permissions *Permissions `xml:"PERMISSIONS"`
-	DatastoreID int          `xml:"DATASTORE_ID"`
+	RegTime     string       `xml:"REG"`
+	Size        int          `xml:"SIZE"`
+	State       int          `xml:"STATE"`
+	Source      string       `xml:"SOURCE"`
+	Path        string       `xml:"PATH"`
 	Persistent  string       `xml:"PERSISTENT"`
+	DatastoreID int          `xml:"DATASTORE_ID"`
+	Datastore   string       `xml:"DATASTORE"`
+	FsType      string       `xml:"FSTYPE"`
+	RunningVMs  int          `xml:"RUNNING_VMS"`
+}
+
+type UserImages struct {
+	UserImage []*UserImage `xml:"IMAGE"`
 }
 
 func resourceImage() *schema.Resource {
@@ -170,13 +177,12 @@ func resourceImageRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	d.SetId(strconv.Itoa(vn.Id))
+	d.SetId(strconv.Itoa(img.Id))
 	d.Set("name", img.Name)
 	d.Set("uid", img.Uid)
 	d.Set("gid", img.Gid)
 	d.Set("uname", img.Uname)
 	d.Set("gname", img.Gname)
-	d.Set("imageid", img.Imageid)
 	d.Set("permissions", permissionString(img.Permissions))
 
 	return nil
