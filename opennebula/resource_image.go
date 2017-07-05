@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-type UserImage struct {
+type Image struct {
 	Name        string       `xml:"NAME"`
 	Id          int          `xml:"ID"`
 	Uid         int          `xml:"UID"`
@@ -29,8 +29,8 @@ type UserImage struct {
 	RunningVMs  int          `xml:"RUNNING_VMS"`
 }
 
-type UserImages struct {
-	UserImage []*UserImage `xml:"IMAGE"`
+type Images struct {
+	Image []*Image `xml:"IMAGE"`
 }
 
 func resourceImage() *schema.Resource {
@@ -100,7 +100,7 @@ func resourceImage() *schema.Resource {
 				Computed:    true,
 				Description: "Name of the group that will own the Image",
 			},
-			"imageid": {
+			"image_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "ID of the Image to be cloned from",
@@ -114,7 +114,7 @@ func resourceImageCreate(d *schema.ResourceData, meta interface{}) error {
 	// Create base object
 	resp, err := client.Call(
 		"one.image.clone",
-		d.Get("imageid"),
+		d.Get("image_id"),
 		d.Get("name"),
 		-1,
 	)
@@ -132,8 +132,8 @@ func resourceImageCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceImageRead(d *schema.ResourceData, meta interface{}) error {
-	var img *UserImage
-	var imgs *UserImages
+	var img *Image
+	var imgs *Images
 
 	client := meta.(*Client)
 	found := false
@@ -162,7 +162,7 @@ func resourceImageRead(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 
-		for _, t := range imgs.UserImage {
+		for _, t := range imgs.Image {
 			if t.Name == d.Get("name").(string) {
 				img = t
 				found = true
