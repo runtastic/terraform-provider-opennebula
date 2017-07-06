@@ -52,7 +52,7 @@ func resourceImage() *schema.Resource {
 			},
 			"description": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Description of the Image, in OpenNebula's XML or String format",
 			},
 			"permissions": {
@@ -102,14 +102,46 @@ func resourceImage() *schema.Resource {
 			},
 			"image_id": {
 				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "ID of the Image to be cloned from. If Image ID is not set, a new Image will be created",
+			},
+			"datastore_id": {
+				Type:        schema.TypeInt,
 				Required:    true,
-				Description: "ID of the Image to be cloned from",
+				Description: "ID of the datastore where Image will be stored",
 			},
 		},
 	}
 }
 
 func resourceImageCreate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*Client)
+
+	// Check if Image ID for cloning is set
+	if d.Get("image_id") != nil {
+		return resourceImageClone(d, meta)
+	}
+
+	// Create base object
+	resp, err := client.Call(
+		"one.image.allocate",
+		fmt.Sprintf("NAME = \"%s\"\n", d.Get("name").(string))+d.Get("description").(string),
+		d.Get("datastore_id"),
+	)
+	if err != nil {
+		return err
+	}
+
+	d.SetId(resp)
+	// update permisions
+	if _, err = changePermissions(intId(d.Id()), permission(d.Get("permissions").(string)), client, "one.image.chmod"); err != nil {
+		return err
+	}
+
+	return resourceImageRead(d, meta)
+}
+
+func resourceImageClone(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Client)
 	// Create base object
 	resp, err := client.Call(
@@ -124,7 +156,7 @@ func resourceImageCreate(d *schema.ResourceData, meta interface{}) error {
 
 	d.SetId(resp)
 	// update permisions
-	if _, err = changePermissions(intId(d.Id()), permission(d.Get("permissions").(string)), client, "one.vn.chmod"); err != nil {
+	if _, err = changePermissions(intId(d.Id()), permission(d.Get("permissions").(string)), client, "one.image.chmod"); err != nil {
 		return err
 	}
 
