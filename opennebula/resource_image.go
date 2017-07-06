@@ -148,7 +148,7 @@ func resourceImageClone(d *schema.ResourceData, meta interface{}) error {
 		"one.image.clone",
 		d.Get("image_id"),
 		d.Get("name"),
-		-1,
+		d.Get("datastore_id"),
 	)
 	if err != nil {
 		return err
