@@ -118,7 +118,7 @@ func resourceImageCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Client)
 
 	// Check if Image ID for cloning is set
-	if d.Get("image_id") != nil {
+	if d.Get("image_id") > 0 {
 		return resourceImageClone(d, meta)
 	}
 
