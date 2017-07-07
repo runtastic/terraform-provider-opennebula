@@ -3,10 +3,12 @@ package opennebula
 import (
 	"encoding/xml"
 	"fmt"
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Image struct {
@@ -118,7 +120,7 @@ func resourceImageCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Client)
 
 	// Check if Image ID for cloning is set
-	if d.Get("image_id") > 0 {
+	if d.Get("image_id").(int) > 0 {
 		return resourceImageClone(d, meta)
 	}
 
@@ -133,6 +135,12 @@ func resourceImageCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(resp)
+
+	_, err = waitForImageState(d, meta, "ready")
+	if err != nil {
+		return fmt.Errorf("Error waiting for Image (%s) to be in state READY: %s", d.Id(), err)
+	}
+
 	// update permisions
 	if _, err = changePermissions(intId(d.Id()), permission(d.Get("permissions").(string)), client, "one.image.chmod"); err != nil {
 		return err
@@ -143,7 +151,8 @@ func resourceImageCreate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceImageClone(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Client)
-	// Create base object
+
+	// Clone Image from given ID
 	resp, err := client.Call(
 		"one.image.clone",
 		d.Get("image_id"),
@@ -155,12 +164,54 @@ func resourceImageClone(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(resp)
+
+	_, err = waitForImageState(d, meta, "ready")
+	if err != nil {
+		return fmt.Errorf("Error waiting for Image (%s) to be in state READY: %s", d.Id(), err)
+	}
+
 	// update permisions
 	if _, err = changePermissions(intId(d.Id()), permission(d.Get("permissions").(string)), client, "one.image.chmod"); err != nil {
 		return err
 	}
 
 	return resourceImageRead(d, meta)
+}
+
+func waitForImageState(d *schema.ResourceData, meta interface{}, state string) (interface{}, error) {
+	var img *Image
+	client := meta.(*Client)
+
+	log.Printf("Waiting for Image (%s) to be in state Ready", d.Id())
+
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{"anythingelse"},
+		Target:  []string{state},
+		Refresh: func() (interface{}, string, error) {
+			log.Println("Refreshing Image state...")
+			if d.Id() != "" {
+				resp, err := client.Call("one.image.info", intId(d.Id()))
+				if err == nil {
+					if err = xml.Unmarshal([]byte(resp), &img); err != nil {
+						return nil, "", fmt.Errorf("Couldn't fetch Image state: %s", err)
+					}
+				} else {
+					return nil, "", fmt.Errorf("Could not find Image by ID %s", d.Id())
+				}
+			}
+			log.Printf("Image is currently in state %v", img.State)
+			if img.State == 1 {
+				return img, "ready", nil
+			} else {
+				return nil, "anythingelse", nil
+			}
+		},
+		Timeout:    10 * time.Minute,
+		Delay:      10 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+
+	return stateConf.WaitForState()
 }
 
 func resourceImageRead(d *schema.ResourceData, meta interface{}) error {
