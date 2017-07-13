@@ -2,6 +2,7 @@ package opennebula
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -102,15 +103,21 @@ func resourceImage() *schema.Resource {
 				Computed:    true,
 				Description: "Name of the group that will own the Image",
 			},
-			"image_id": {
-				Type:        schema.TypeInt,
+			"clone_from_image": {
+				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "ID of the Image to be cloned from. If Image ID is not set, a new Image will be created",
+				Description: "Name of the Image to be cloned from. If Image Name is empty, a new Image will be created",
 			},
 			"datastore_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "ID of the datastore where Image will be stored",
+			},
+			"persistent": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Flag which indicates if the Image has to be persistent",
 			},
 		},
 	}
@@ -120,14 +127,20 @@ func resourceImageCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Client)
 
 	// Check if Image ID for cloning is set
-	if d.Get("image_id").(int) > 0 {
+	if len(d.Get("clone_from_image").(string)) > 0 {
 		return resourceImageClone(d, meta)
+	}
+
+	var isPersistent string
+	isPersistent = "NO"
+	if d.Get("persistent").(bool) {
+		isPersistent = "YES"
 	}
 
 	// Create base object
 	resp, err := client.Call(
 		"one.image.allocate",
-		fmt.Sprintf("NAME = \"%s\"\n", d.Get("name").(string))+d.Get("description").(string),
+		fmt.Sprintf("NAME = \"%s\"\nPERSISTENT = \"%s\"\n", d.Get("name").(string), isPersistent)+d.Get("description").(string),
 		d.Get("datastore_id"),
 	)
 	if err != nil {
@@ -152,10 +165,15 @@ func resourceImageCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceImageClone(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Client)
 
+	imageId, err := getImageIdByName(d, meta)
+	if err != nil {
+		return fmt.Errorf("Unable to find Image by name %s", d.Get("clone_from_image"))
+	}
+
 	// Clone Image from given ID
 	resp, err := client.Call(
 		"one.image.clone",
-		d.Get("image_id"),
+		imageId,
 		d.Get("name"),
 		d.Get("datastore_id"),
 	)
@@ -172,6 +190,16 @@ func resourceImageClone(d *schema.ResourceData, meta interface{}) error {
 
 	// update permisions
 	if _, err = changePermissions(intId(d.Id()), permission(d.Get("permissions").(string)), client, "one.image.chmod"); err != nil {
+		return err
+	}
+
+	// set persistency if needed
+	resp, err = client.Call(
+		"one.image.persistent",
+		intId(d.Id()),
+		d.Get("persistent"),
+	)
+	if err != nil {
 		return err
 	}
 
@@ -269,6 +297,39 @@ func resourceImageRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("permissions", permissionString(img.Permissions))
 
 	return nil
+}
+
+func getImageIdByName(d *schema.ResourceData, meta interface{}) (int, error) {
+	var img *Image
+	var imgs *Images
+
+	client := meta.(*Client)
+	found := false
+
+	resp, err := client.Call("one.imagepool.info", -3, -1, -1)
+	if err != nil {
+		return 0, err
+	}
+
+	if err = xml.Unmarshal([]byte(resp), &imgs); err != nil {
+		return 0, err
+	}
+
+	for _, t := range imgs.Image {
+		if t.Name == d.Get("clone_from_image").(string) {
+			img = t
+			found = true
+			break
+		}
+	}
+
+	if !found || img == nil {
+		log.Printf("Could not find Image with name %s for user %s", d.Get("clone_from_image").(string), client.Username)
+		err = errors.New("ImageNotFound")
+		return 0, err
+	}
+
+	return img.Id, nil
 }
 
 func resourceImageExists(d *schema.ResourceData, meta interface{}) (bool, error) {
