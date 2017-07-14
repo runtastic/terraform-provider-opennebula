@@ -27,3 +27,5 @@ tmp/
 .env
 test.go
 *.swp
+
+vendor/
