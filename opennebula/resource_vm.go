@@ -253,7 +253,7 @@ func resourceVmDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	client := meta.(*Client)
-	resp, err := client.Call("one.vm.action", "terminate", intId(d.Id()))
+	resp, err := client.Call("one.vm.action", "terminate-hard", intId(d.Id()))
 	if err != nil {
 		return err
 	}
