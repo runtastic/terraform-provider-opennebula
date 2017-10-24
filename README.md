@@ -1,14 +1,12 @@
 # terraform-provider-opennebula
 
 [OpenNebula](https://opennebula.org/) provider for [Terraform](https://www.terraform.io/).
- 
-* Leverages [OpenNebula's XML/RPC API](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html) 
+
+* Leverages [OpenNebula's XML/RPC API](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html)
 * Tested for versions 5.X
 
 
 The provider tries to impose a lightweight level of abstraction on OpenNebula's resources. This means that only the most fundamental attributes are directly accessible (i.e. names, IDs, permissions and user/group identities). For maximum flexibility and portability, the remaining attributes can be specified using any of the formats natively accepted by OpenNebula (XML and String).
-
-
 
 ## EXAMPLE
 
@@ -66,7 +64,7 @@ output "demo_template_uname" {
 
 ## ROADMAP
 
-The following list represent's all of OpenNebula's resources reachable through their API. The checked items are the ones that are fully functional and tested:
+The following list represents all of OpenNebula's resources reachable through their API. The checked items are the ones that are fully functional and tested:
 
 * [X] [onevm](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onevm)
 * [X] [onetemplate](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onetemplate)
@@ -86,6 +84,15 @@ The following list represent's all of OpenNebula's resources reachable through t
 * [ ] [oneacl](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#oneacl)
 * [ ] [oneacct](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#oneacct)
 
+
+## Development
+
+This project make use of the **[dep](https://github.com/golang/dep)** dependency vendor tool. To restore packages after `git clone`, run:
+
+```shell
+go get -u github.com/golang/dep/cmd/dep # if you don't have 'dep' installed
+dep ensure
+```
 
 ## Collaborators
 
