@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
+	"net"
 	"strconv"
 	"strings"
 )
@@ -149,16 +150,22 @@ func resourceVnetCreate(d *schema.ResourceData, meta interface{}) error {
 
 	if d.Get("reservation_size").(int) > 0 {
 		// add address range and reservations
-		var address_reservation_string = `SIZE = %d
-    NAME = ASDF`
-		_, r_err := client.Call(
-			"one.vn.reserve",
-			intId(d.Id()),
-			fmt.Sprintf(address_reservation_string, d.Get("reservation_size").(int)),
-		)
+		ip := net.ParseIP(d.Get("ip_start").(string))
+		ip = ip.To4()
 
-		if r_err != nil {
-			return r_err
+		for i := 0; i < d.Get("reservation_size").(int); i++ {
+			var address_reservation_string = `LEASES=[IP=%s]`
+			_, r_err := client.Call(
+				"one.vn.hold",
+				intId(d.Id()),
+				fmt.Sprintf(address_reservation_string, ip),
+			)
+
+			if r_err != nil {
+				return r_err
+			}
+
+			ip[3]++
 		}
 
 	}
@@ -248,6 +255,40 @@ func resourceVnetUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	if d.HasChange("name") {
+		resp, err := client.Call(
+			"one.vn.rename",
+			intId(d.Id()),
+			d.Get("name").(string),
+		)
+		if err != nil {
+			return err
+		}
+		log.Printf("[INFO] Successfully updated name for Vnet %s\n", resp)
+	}
+
+	if d.HasChange("ip_size") {
+		var address_range_string = `AR = [
+		AR_ID = 0,
+		TYPE = IP4,
+		IP = %s,
+		SIZE = %d ]`
+		resp, a_err := client.Call(
+			"one.vn.update_ar",
+			intId(d.Id()),
+			fmt.Sprintf(address_range_string, d.Get("ip_start").(string), d.Get("ip_size").(int)),
+		)
+
+		if a_err != nil {
+			return a_err
+		}
+		log.Printf("[INFO] Successfully updated size of address range for Vnet %s\n", resp)
+	}
+
+	if d.HasChange("ip_start") {
+		log.Printf("[WARNING] Changing the IP address of the Vnet address range is currently not supported")
+	}
+
 	if d.HasChange("permissions") {
 		resp, err := changePermissions(intId(d.Id()), permission(d.Get("permissions").(string)), client, "one.vn.chmod")
 		if err != nil {
@@ -266,6 +307,28 @@ func resourceVnetDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	client := meta.(*Client)
+	if d.Get("reservation_size").(int) > 0 {
+		// add address range and reservations
+		ip := net.ParseIP(d.Get("ip_start").(string))
+		ip = ip.To4()
+
+		for i := 0; i < d.Get("reservation_size").(int); i++ {
+			var address_reservation_string = `LEASES=[IP=%s]`
+			_, r_err := client.Call(
+				"one.vn.release",
+				intId(d.Id()),
+				fmt.Sprintf(address_reservation_string, ip),
+			)
+
+			if r_err != nil {
+				return r_err
+			}
+
+			ip[3]++
+		}
+		log.Printf("[INFO] Successfully released reservered IP addresses.")
+	}
+
 	resp, err := client.Call("one.vn.delete", intId(d.Id()), false)
 	if err != nil {
 		return err

@@ -142,8 +142,8 @@ resource "opennebula_vnet" "test" {
   VN_MAD="dummy"
   EOF
   bridge = "br-test"
-  ip_start = "192.168.0.1"
-  ip_size = 10
+  ip_start = "192.168.0.10"
+  ip_size = 20
   permissions = "700"
 }
 `

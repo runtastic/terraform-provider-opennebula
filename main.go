@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/hashicorp/terraform/plugin"
-	"github.com/larribas/terraform-provider-opennebula/opennebula"
+	"stash.runtastic.com/ropscode/opennebula-provider/opennebula"
 )
 
 func main() {
