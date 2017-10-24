@@ -69,15 +69,15 @@ output "demo_template_uname" {
 The following list represent's all of OpenNebula's resources reachable through their API. The checked items are the ones that are fully functional and tested:
 
 * [X] [onevm](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onevm)
-* [x] [onetemplate](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onetemplate)
+* [X] [onetemplate](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onetemplate)
 * [ ] [onehost](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onehost)
 * [ ] [onecluster](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onecluster)
 * [ ] [onegroup](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onegroup)
 * [ ] [onevdc](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onevdc)
-* [x] [onevnet](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onevnet)
+* [X] [onevnet](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onevnet)
 * [ ] [oneuser](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#oneuser)
 * [ ] [onedatastore](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onedatastore)
-* [ ] [oneimage](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#oneimage)
+* [X] [oneimage](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#oneimage)
 * [ ] [onemarket](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onemarket)
 * [ ] [onemarketapp](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onemarketapp)
 * [ ] [onevrouter](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html#onevrouter)
