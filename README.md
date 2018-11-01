@@ -17,7 +17,7 @@ Create a file called `demo_template.txt`.
 _Notice how we need to escape native variables `$$USER[SSH_PUBLIC_KEY]` with two dollar signs, as terraform will try to replace all variables with a single dollar sign)_
 
 ```
-CUSTOM_ATTRIBUTE = "$CUSTOM_ATTRIBUTE_VALUE"
+CUSTOM_ATTRIBUTE = "${CUSTOM_ATTRIBUTE_VALUE}"
 CONTEXT = [
   DNS_HOSTNAME = "yes",
   NETWORK = "YES",
