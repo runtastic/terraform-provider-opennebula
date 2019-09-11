@@ -62,6 +62,12 @@ func resourceVm() *schema.Resource {
 				Required:    true,
 				Description: "Id of the VM template to use. Either 'template_name' or 'template_id' is required",
 			},
+			"template_args": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Additional arguments to a template",
+				Default: "",
+			},
 			"permissions": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -134,7 +140,7 @@ func resourceVmCreate(d *schema.ResourceData, meta interface{}) error {
 		d.Get("template_id"),
 		d.Get("name"),
 		false,
-		"",
+		d.Get("template_args"),
 		false,
 	)
 	if err != nil {
