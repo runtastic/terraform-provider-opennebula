@@ -99,7 +99,7 @@ intended to be a safe, welcoming space for collaboration, and contributors are
 expected to adhere to the
 [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
-Check out our [career page](https://github.com/runtastic/request_handler) if you'd like to work with us.
+Check out our [career page](https://www.runtastic.com/career/) if you'd like to work with us.
 
 ## License
 
