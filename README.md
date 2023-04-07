@@ -1,6 +1,6 @@
 # terraform-provider-opennebula
 
-:warning: **Deprecation Notice:** This repository is no longer maintained. Please use the official repository at [OpenNebula/terraform-provider-opennebula](https://github.com/OpenNebula/terraform-provider-opennebula) for the updated and actively maintained version.
+:warning: **Deprecation Notice:** This repository is no longer maintained. Please use the [official OpenNebula Terraform provider](https://github.com/OpenNebula/terraform-provider-opennebula) for the updated and actively maintained version.
 
 ---
 
