@@ -2,6 +2,8 @@
 
 :warning: **Deprecation Notice:** This repository is no longer maintained. Please use the official repository at [OpenNebula/terraform-provider-opennebula](https://github.com/OpenNebula/terraform-provider-opennebula) for the updated and actively maintained version.
 
+---
+
 [OpenNebula](https://opennebula.org/) provider for [Terraform](https://www.terraform.io/).
  
 * Leverages [OpenNebula's XML/RPC API](https://docs.opennebula.org/5.2/integration/system_interfaces/api.html) 
